@@ -494,7 +494,10 @@ Advantages:
 * Minimal inversion count
 * Excellent GPU compatibility
 
+
 Disadvantages:
 
 * Applicable primarily to sequential key ranges
 * Requires careful state management
+
+This repository demonstrates the practical impact of combining Jacobian coordinates, incremental point generation, and Montgomery batch inversion for large-scale secp256k1 point generation workloads.
