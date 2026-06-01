@@ -300,3 +300,201 @@ def distributed_search(gpu_count, batch_size=1000):
         p.join()
 ```
 
+## What This Project Does NOT Claim
+
+This project presents an engineering optimization for elliptic curve computations on secp256k1.
+
+The batch inversion technique (Montgomery's Trick):
+
+* Reduces the number of field inversions required during coordinate conversion.
+* Improves throughput of sequential elliptic curve point generation.
+* Accelerates ECC workloads used in cryptographic research and benchmarking.
+
+This project does **not**:
+
+* Break secp256k1.
+* Solve the Elliptic Curve Discrete Logarithm Problem (ECDLP).
+* Reduce the asymptotic complexity of Pollard Rho, Pollard Kangaroo, or Baby-Step Giant-Step.
+* Provide a practical attack against Bitcoin private keys.
+
+The achieved speedup is a constant-factor engineering improvement rather than a cryptanalytic breakthrough.
+
+## Practical Applications
+
+The techniques demonstrated in this repository are applicable to:
+
+* Pollard Rho implementations
+* Pollard Kangaroo implementations
+* Baby-Step Giant-Step (BSGS) solvers
+* Vanity address generation
+* secp256k1 research frameworks
+* GPU ECC computation pipelines
+* Large-scale point table generation
+* Cryptographic benchmarking
+
+Batch inversion is particularly beneficial when thousands of projective points must be converted to affine coordinates simultaneously.
+
+## Limitations
+
+Benchmark results presented in this repository were obtained using Python implementations and should not be interpreted as theoretical speedups.
+
+Observed acceleration depends on:
+
+* CPU architecture
+* Compiler optimizations
+* Field arithmetic implementation
+* Batch size
+* Memory bandwidth
+* Cache efficiency
+
+For production-grade C/C++ implementations using optimized secp256k1 arithmetic, absolute performance figures may differ significantly.
+
+The theoretical benefit of Montgomery's trick approaches approximately 20× for very large batches, but real-world implementations typically achieve smaller gains due to surrounding computation costs.
+
+## Reproducibility
+
+The benchmark results presented in this repository can be reproduced using the included test suite.
+
+### Environment
+
+Recommended environment:
+
+* Python 3.8+
+* Linux (Ubuntu 22.04 tested)
+* GCC 11+
+* Intel or AMD x86_64 CPU
+* 16 GB RAM or more
+
+### Clone Repository
+
+```bash
+git clone https://github.com/Anvexis/secp256k1-batch-inversion.git
+cd secp256k1-batch-inversion
+```
+
+### Run Benchmark
+
+```bash
+python3 test_batch_inversion.py
+```
+
+### Expected Output
+
+The benchmark will evaluate:
+
+1. Affine coordinate computation
+2. Jacobian coordinates with individual conversion
+3. Jacobian coordinates with Montgomery batch inversion
+4. Jacobian coordinates with batch inversion and incremental addition
+
+Example output:
+
+```text
+Naive (Affine):                      ~2,700 keys/s
+Jacobian (Individual Conversion):    ~2,800 keys/s
+Jacobian + Batch Inversion:         ~15,000 keys/s
+Jacobian + Batch + Incremental:     ~20,000 keys/s
+```
+
+Exact results depend on:
+
+* CPU architecture
+* Compiler version
+* Python version
+* Cache size
+* Batch size
+
+### Verification
+
+To verify correctness:
+
+* All generated public keys must match the affine reference implementation.
+* Batch inversion outputs must match individual modular inversions.
+* Hash160 results must remain identical across all methods.
+
+The optimization changes only performance characteristics and does not alter cryptographic correctness.
+
+## Performance Comparison
+
+The following table summarizes the tested approaches.
+
+| Method                                            | Point Generation | Coordinate System | Inversions  | Relative Speed |
+| ------------------------------------------------- | ---------------- | ----------------- | ----------- | -------------- |
+| Affine                                            | kG from scratch  | Affine            | N           | 1.0x           |
+| Jacobian                                          | kG from scratch  | Jacobian          | N           | 1.0–1.2x       |
+| Jacobian + Batch Inversion                        | kG from scratch  | Jacobian          | 1 per batch | 5–7x           |
+| Jacobian + Batch Inversion + Incremental Addition | Q(i+1)=Q(i)+G    | Jacobian          | 1 per batch | 7–20x*         |
+
+* Depends heavily on implementation details, batch size, hardware, and surrounding cryptographic workload.
+
+### Interpretation
+
+#### Affine Coordinates
+
+Each point operation requires modular inversion.
+
+Advantages:
+
+* Simple implementation
+* Easy debugging
+
+Disadvantages:
+
+* Inversion-heavy
+* Poor scalability
+
+#### Jacobian Coordinates
+
+Field inversions are delayed until final conversion.
+
+Advantages:
+
+* Faster point addition
+* Standard ECC optimization
+
+Disadvantages:
+
+* Final affine conversion still requires N inversions
+
+#### Jacobian + Batch Inversion
+
+Uses Montgomery's trick to replace N inversions with a single inversion.
+
+Advantages:
+
+* Significant reduction in inversion cost
+* Excellent for large batches
+
+Disadvantages:
+
+* Requires temporary storage
+* Benefits appear only when processing many points
+
+#### Jacobian + Batch Inversion + Incremental Addition
+
+Combines:
+
+1. Jacobian arithmetic
+2. Montgomery batch inversion
+3. Sequential point generation
+
+Instead of computing:
+
+kG
+
+for every key independently, the next point is generated as:
+
+Q(i+1) = Q(i) + G
+
+This avoids repeated scalar multiplication and is the preferred strategy for large-scale sequential key scanning.
+
+Advantages:
+
+* Maximum throughput
+* Minimal inversion count
+* Excellent GPU compatibility
+
+Disadvantages:
+
+* Applicable primarily to sequential key ranges
+* Requires careful state management
