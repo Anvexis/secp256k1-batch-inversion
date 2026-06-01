@@ -90,7 +90,7 @@ $inv = inv · zᵢ$
 
 This equals: $z₁⁻¹·...·z_{i-1}⁻¹$
 
-$result[0] = inv # This equals z₁⁻¹$ ✓
+$result[0] = inv This equals z₁⁻¹$ ✓
 
 ### Example: 4 Elements
 
