@@ -169,7 +169,7 @@ python3 test_batch_inversion.py
 ```
 
 Expected Output
-
+```python
 ======================================================================
 SECP256K1 BATCH INVERSION BENCHMARK
 Testing: Montgomery's Trick + Incremental Addition
@@ -218,6 +218,8 @@ CONCLUSIONS
 ✅ Real-world impact: Bitcoin Puzzle #71 search time reduced from
    13,300 years to 2,500 years (single RTX 4090 GPU)
 ======================================================================
+
+```
 
 ### C++ Implementation (Production)
 ### For production use, implement in C++ with optimizations:
